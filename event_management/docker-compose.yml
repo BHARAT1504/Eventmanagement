@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    
+    volumes:
+      - ./frontend/src:/app/src
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+      - db
+
+  backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    restart: always  
+    env_file:
+      - ./.env
+    volumes:
+      - .:/app
+      - /static/:/app/static
+      - ./log/uwsgi/:/var/log/uwsgi/
+      - ./log/event_management/:/var/log/event_management/
+    ports:
+      - "8001:8000"
+    depends_on:
+      - db
+
+  db:
+    image: postgres
+    container_name: postgres-service
+    restart: always
+    env_file: 
+      - ./.env
+
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+    ports:
+      - "5433:5432"
+    expose:
+      - '5432'
+    volumes:
+      - ./db:/var/lib/postgresql/data
+
